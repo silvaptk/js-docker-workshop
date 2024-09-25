@@ -1,0 +1,57 @@
+services:
+  mission-control:
+    build: 
+      context: "./mission-control"
+      dockerfile: "./Dockerfile"
+    volumes:
+      - "./mission-control:/app"
+      - "/app/node_modules"
+    ports:
+      - 8081:8081
+    depends_on:
+      - mysql
+  crane:
+    build: 
+      context: "./crane"
+      dockerfile: "./Dockerfile"
+    volumes:
+      - "./crane:/app"
+      - "/app/node_modules"
+    ports:
+      - 8083:8083
+    depends_on:
+      - mission-control
+      - barrier
+      - mysql
+  barrier:
+    build: 
+      context: "./barrier"
+      dockerfile: "./Dockerfile"
+    volumes:
+      - "./barrier:/app"
+      - "/app/node_modules"
+    ports:
+      - 8082:8082
+    depends_on:
+      - redis
+
+  mysql:
+    image: "mysql"
+    environment:
+      MYSQL_ROOT_PASSWORD: "password"
+      MYSQL_DATABASE: "whale-harbor"
+    volumes:
+      - "whale-harbor-mysql-data:/var/lib/mysql"
+  redis:
+    image: "redis/redis-stack-server"
+    volumes:
+      - "whale-harbor-redis-data:/data"
+  yarn:
+    image: "node"
+    working_dir: "/app"
+    entrypoint: ["/bin/bash", "-c", "yarn --cwd $0 $1"]
+    volumes:
+      - ".:/app"
+volumes:
+  whale-harbor-mysql-data:
+  whale-harbor-redis-data:
